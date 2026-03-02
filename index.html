@@ -2,6 +2,12 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Ninja 2">
+<meta name="theme-color" content="#000000">
 <title>NINJA 2</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&display=swap');
@@ -23,6 +29,16 @@ canvas{display:block;}
 #announce{position:fixed;top:40%;left:50%;transform:translateX(-50%);z-index:8;text-align:center;pointer-events:none;opacity:0;transition:opacity 0.3s;}
 #announce h2{font-family:'Cinzel',serif;font-size:clamp(28px,5vw,54px);color:#e2c97e;letter-spacing:6px;text-shadow:0 0 20px #e2c97e;}
 #announce p{color:rgba(255,255,255,0.45);letter-spacing:3px;font-size:12px;margin-top:6px;}
+/* TOUCH CONTROLS */
+#touch-controls{position:fixed;bottom:0;left:0;right:0;z-index:6;display:none;pointer-events:none;padding:10px;padding-bottom:max(10px,env(safe-area-inset-bottom));}
+#touch-left{position:absolute;left:10px;bottom:max(10px,env(safe-area-inset-bottom));display:flex;gap:10px;}
+#touch-right{position:absolute;right:10px;bottom:max(10px,env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:10px;align-items:flex-end;}
+#touch-top-right{position:absolute;right:10px;bottom:max(140px,env(safe-area-inset-bottom)+130px);display:flex;gap:10px;}
+.tbtn{width:70px;height:70px;border-radius:50%;border:2px solid rgba(255,255,255,0.3);background:rgba(0,0,0,0.5);color:white;font-size:24px;display:flex;align-items:center;justify-content:center;pointer-events:all;user-select:none;-webkit-user-select:none;backdrop-filter:blur(4px);touch-action:manipulation;}
+.tbtn:active{background:rgba(255,255,255,0.2);border-color:rgba(255,255,255,0.7);}
+.tbtn.wide{width:150px;border-radius:35px;}
+#install-btn{position:fixed;bottom:20px;right:20px;z-index:20;background:#e2c97e;color:#000;border:none;padding:12px 20px;border-radius:30px;font-family:'Cinzel',serif;font-size:13px;letter-spacing:2px;cursor:pointer;display:none;box-shadow:0 4px 20px rgba(226,201,126,0.4);}
+@media (pointer:coarse){#touch-controls{display:block;}#screen .info{display:none;}}
 </style>
 </head>
 <body>
@@ -38,6 +54,24 @@ canvas{display:block;}
   </div>
 </div>
 <div id="announce"><h2 id="an-title"></h2><p id="an-sub"></p></div>
+
+<!-- TOUCH CONTROLS -->
+<div id="touch-controls">
+  <div id="touch-left">
+    <div class="tbtn" id="btn-left">&#9664;</div>
+    <div class="tbtn" id="btn-right">&#9654;</div>
+  </div>
+  <div id="touch-top-right">
+    <div class="tbtn" id="btn-dash">&#9889;</div>
+  </div>
+  <div id="touch-right">
+    <div class="tbtn" id="btn-jump">&#8679;</div>
+    <div class="tbtn" id="btn-atk">&#9876;</div>
+  </div>
+</div>
+
+<!-- INSTALL BUTTON -->
+<button id="install-btn">&#11123; Install App</button>
 <div id="screen">
   <h1>NINJA 2</h1>
   <div class="tagline">100 LEVELS &middot; MASTER THE SHADOW ART</div>
@@ -635,6 +669,40 @@ document.getElementById('play-btn').addEventListener('click',function(){
 
 ld=makeLevel(1);
 loop();
+
+// ===== TOUCH CONTROLS =====
+function setupTouch(id, keyOn, keyOff){
+  var el=document.getElementById(id);
+  if(!el)return;
+  el.addEventListener('touchstart',function(e){e.preventDefault();K[keyOn]=true;},{ passive:false });
+  el.addEventListener('touchend',function(e){e.preventDefault();K[keyOn]=false;},{ passive:false });
+  el.addEventListener('touchcancel',function(e){e.preventDefault();K[keyOn]=false;},{ passive:false });
+}
+setupTouch('btn-left','KeyA');
+setupTouch('btn-right','KeyD');
+setupTouch('btn-jump','Space');
+setupTouch('btn-atk','KeyJ');
+setupTouch('btn-dash','ShiftLeft');
+
+// Prevent page scroll on touch
+document.addEventListener('touchmove',function(e){e.preventDefault();},{passive:false});
+
+// ===== PWA INSTALL =====
+var deferredPrompt=null;
+var installBtn=document.getElementById('install-btn');
+window.addEventListener('beforeinstallprompt',function(e){
+  e.preventDefault();
+  deferredPrompt=e;
+  installBtn.style.display='block';
+});
+installBtn.addEventListener('click',function(){
+  if(deferredPrompt){
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(function(){deferredPrompt=null;installBtn.style.display='none';});
+  }
+});
+window.addEventListener('appinstalled',function(){installBtn.style.display='none';});
 </script>
 </body>
 </html>
+
